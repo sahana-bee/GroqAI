@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Groq AI Chatbot - Intelligent, Voice & Document AI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Highlight.js for code syntax highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" id="hljs-theme">
+    <!-- Main Style -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="app-body dark-theme" data-font="{{ settings.get('font_size', 'normal') }}" data-bg="{{ settings.get('background', 'dragon_throne') }}">
+    <div class="app-layout">
+        
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="brand-badge">
+                    <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M12 6v6l4 2"></path>
+                        <circle cx="12" cy="12" r="3" fill="currentColor"></circle>
+                    </svg>
+                    <span class="brand-text">Groq<span>AI</span></span>
+                </div>
+                <button class="icon-btn close-sidebar-btn" id="closeSidebarBtn" title="Close Sidebar">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- New Chat Button -->
+            <div class="sidebar-action">
+                <button class="btn btn-primary btn-new-chat" id="newChatBtn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    <span>New Chat</span>
+                </button>
+            </div>
+
+            <!-- Search Chats -->
+            <div class="sidebar-search">
+                <div class="search-box">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" id="searchChatInput" placeholder="Search conversations...">
+                </div>
+            </div>
+
+            <!-- Chat History List -->
+            <div class="sidebar-chats-container" id="chatListContainer">
+                <div class="chat-group" id="chatGroupToday">
+                    <div class="chat-group-title">Today</div>
+                    <div class="chat-items-list" id="chatsToday"></div>
+                </div>
+                <div class="chat-group" id="chatGroupYesterday">
+                    <div class="chat-group-title">Yesterday</div>
+                    <div class="chat-items-list" id="chatsYesterday"></div>
+                </div>
+                <div class="chat-group" id="chatGroupPrevious">
+                    <div class="chat-group-title">Previous 7 Days</div>
+                    <div class="chat-items-list" id="chatsPrevious"></div>
+                </div>
+                <div class="chat-group" id="chatGroupOlder">
+                    <div class="chat-group-title">Older</div>
+                    <div class="chat-items-list" id="chatsOlder"></div>
+                </div>
+                <div class="empty-chats" id="emptyChatsMsg" style="display: none;">
+                    <span>No conversations found</span>
+                </div>
+            </div>
+
+            <!-- Sidebar User Profile Footer -->
+            <div class="sidebar-footer">
+                <div class="user-card" id="userMenuTrigger">
+                    <div class="user-avatar">
+                        <span>{{ user.username[0].upper() }}</span>
+                    </div>
+                    <div class="user-info">
+                        <span class="user-name">{{ user.username }}</span>
+                        <span class="user-status"><span class="status-dot"></span> Groq Active</span>
+                    </div>
+                    <div class="footer-actions">
+                        <button class="icon-btn mini-btn" id="openSettingsFooterBtn" title="Settings & Personalization">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="3"></circle>
+                                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                            </svg>
+                        </button>
+                        <a href="{{ url_for('logout_view') }}" class="icon-btn mini-btn" title="Sign Out">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                                <polyline points="16 17 21 12 16 7"></polyline>
+                                <line x1="21" y1="12" x2="9" y2="12"></line>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Chat Area -->
+        <main class="chat-main">
+            <!-- Top Navbar -->
+            <header class="chat-header glass-header">
+                <div class="header-left">
+                    <button class="icon-btn menu-toggle-btn" id="openSidebarBtn" title="Toggle Sidebar">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="3" y1="12" x2="21" y2="12"></line>
+                            <line x1="3" y1="6" x2="21" y2="6"></line>
+                            <line x1="3" y1="18" x2="21" y2="18"></line>
+                        </svg>
+                    </button>
+                    <div class="current-chat-title-wrapper" id="chatTitleWrapper">
+                        <span class="current-chat-title" id="currentChatTitle">New Conversation</span>
+                        <button class="icon-btn edit-title-btn" id="renameCurrentChatBtn" title="Rename Conversation">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 20h9"></path>
+                                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="header-right">
+                    <!-- Model Selector -->
+                    <div class="model-select-wrapper">
+                        <svg class="model-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                            <polyline points="2 17 12 22 22 17"></polyline>
+                            <polyline points="2 12 12 17 22 12"></polyline>
+                        </svg>
+                        <select id="modelSelector" class="model-dropdown">
+                            {% for m in models %}
+                            <option value="{{ m.id }}" {% if m.id == settings.get('preferred_model', 'llama-3.3-70b-versatile') %}selected{% endif %}>
+                                {{ m.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Voice Mode Button -->
+                    <button class="btn btn-voice-mode" id="openVoiceModeBtn" title="Launch Interactive Voice Conversation Mode">
+                        <div class="voice-pulse-indicator"></div>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                            <line x1="12" y1="19" x2="12" y2="23"></line>
+                            <line x1="8" y1="23" x2="16" y2="23"></line>
+                        </svg>
+                        <span>Voice Mode</span>
+                    </button>
+
+                    <!-- Theme Toggle -->
+                    <button class="icon-btn theme-toggle-btn" id="themeToggleBtn" title="Toggle Light/Dark Theme">
+                        <svg class="moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                        </svg>
+                        <svg class="sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: none;">
+                            <circle cx="12" cy="12" r="5"></circle>
+                            <line x1="12" y1="1" x2="12" y2="3"></line>
+                            <line x1="12" y1="21" x2="12" y2="23"></line>
+                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                            <line x1="1" y1="12" x2="3" y2="12"></line>
+                            <line x1="21" y1="12" x2="23" y2="12"></line>
+                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                        </svg>
+                    </button>
+
+                    <!-- Quick Background Toggle -->
+                    <button class="icon-btn" id="quickBgBtn" title="Switch Dragon / Fantasy Background">
+                        <span style="font-size: 1.2rem;">🐉</span>
+                    </button>
+
+                    <!-- Settings Button -->
+                    <button class="icon-btn" id="openSettingsHeaderBtn" title="Settings & Personalization">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                        </svg>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Chat Content Viewport -->
+            <div class="chat-viewport" id="chatViewport">
+                
+                <!-- Welcome Starter State (when current chat has 0 messages) -->
+                <div class="welcome-hero" id="welcomeHero">
+                    <div class="welcome-avatar">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <path d="M12 6v6l4 2"></path>
+                            <circle cx="12" cy="12" r="3" fill="currentColor"></circle>
+                        </svg>
+                    </div>
+                    <h2 class="welcome-title">Hello, <span class="highlight">{{ user.username }}</span></h2>
+                    <p class="welcome-subtitle">Ask anything, analyze documents, or speak with ultra-fast Groq AI</p>
+
+                    {% if not has_api_key %}
+                    <div class="api-key-warning-card">
+                        <div class="warning-icon">⚡</div>
+                        <div class="warning-content">
+                            <strong>Groq API Key Required</strong>
+                            <p>Add your <code>GROQ_API_KEY</code> into the <code>.env</code> or <code>.even</code> file in the project folder, or configure it in Settings.</p>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Starter Prompt Cards -->
+                    <div class="starter-cards-grid">
+                        <div class="starter-card" data-prompt="Analyze and explain the key findings or data in this document.">
+                            <div class="card-icon">📄</div>
+                            <div class="card-text">
+                                <strong>File & Document Chat</strong>
+                                <span>Upload PDF, DOCX, TXT, or CSV to query</span>
+                            </div>
+                        </div>
+                        <div class="starter-card" data-prompt="Write a modern, clean Python script demonstrating asynchronous API calls with error handling.">
+                            <div class="card-icon">⚡</div>
+                            <div class="card-text">
+                                <strong>Senior Code Architect</strong>
+                                <span>Generate clean code, architecture & debug</span>
+                            </div>
+                        </div>
+                        <div class="starter-card" data-prompt="Explain quantum computing principles to a curious high school student.">
+                            <div class="card-icon">🧠</div>
+                            <div class="card-text">
+                                <strong>Explain Like I'm 5</strong>
+                                <span>Break down complex ideas into simple models</span>
+                            </div>
+                        </div>
+                        <div class="starter-card" data-prompt="Draft an engaging sci-fi micro-story about an AI that discovered ancient ruins on Mars.">
+                            <div class="card-icon">✍️</div>
+                            <div class="card-text">
+                                <strong>Creative Storytelling</strong>
+                                <span>Brainstorm stories, poems, and creative prose</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Messages Container -->
+                <div class="messages-list" id="messagesList" style="display: none;"></div>
+
+            </div>
+
+            <!-- Drag and Drop Overlay Indicator -->
+            <div class="drag-drop-overlay" id="dragDropOverlay">
+                <div class="drag-drop-box">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    <span>Drop files here (PDF, DOCX, TXT, CSV)</span>
+                </div>
+            </div>
+
+            <!-- Bottom Chat Input Section -->
+            <div class="chat-input-section">
+                <!-- Attached Files Chips Drawer -->
+                <div class="attachments-drawer" id="attachmentsDrawer" style="display: none;">
+                    <div class="drawer-header">
+                        <span class="drawer-label">Attached Documents for Context:</span>
+                    </div>
+                    <div class="attachment-chips-list" id="attachmentChipsList"></div>
+                </div>
+
+                <div class="input-container glass-panel">
+                    <!-- File Upload Button -->
+                    <button class="icon-btn attachment-btn" id="attachFileBtn" title="Attach Document or Image (PDF, DOCX, TXT, CSV, PNG, JPG)">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+                        </svg>
+                    </button>
+                    <input type="file" id="fileInput" accept=".pdf,.docx,.doc,.txt,.csv,.png,.jpg,.jpeg,.webp,.gif" style="display: none;">
+
+                    <!-- Image Reply Mode Toggle Button -->
+                    <button class="icon-btn image-mode-btn" id="imageModeBtn" title="Toggle Image Reply Mode (Ask AI to generate visual images)">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                            <polyline points="21 15 16 10 5 21"></polyline>
+                        </svg>
+                    </button>
+
+                    <!-- Textarea -->
+                    <textarea id="messageInput" placeholder="Message Groq AI or toggle 🖼️ Image Mode... (Shift+Enter for new line)" rows="1"></textarea>
+
+                    <!-- Voice AI Microphone Button -->
+                    <button class="icon-btn mic-btn" id="micBtn" title="Speech to Text (Microphone)">
+                        <div class="mic-wave"></div>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                            <line x1="12" y1="19" x2="12" y2="23"></line>
+                            <line x1="8" y1="23" x2="16" y2="23"></line>
+                        </svg>
+                    </button>
+
+                    <!-- Send Button -->
+                    <button class="icon-btn send-btn" id="sendBtn" title="Send Message">
+                        <svg class="send-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                        <div class="spinner-icon" style="display: none;"></div>
+                    </button>
+                </div>
+                <div class="input-footer-note">
+                    Groq LPU can make mistakes. Verify critical document and code insights.
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ================= Voice Conversation Mode Modal ================= -->
+    <div class="voice-modal" id="voiceModal" style="display: none;">
+        <div class="voice-modal-backdrop"></div>
+        <div class="voice-modal-content">
+            <button class="icon-btn voice-close-btn" id="closeVoiceModeBtn" title="Exit Voice Mode">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+
+            <div class="voice-visualizer-container">
+                <div class="voice-orb" id="voiceOrb">
+                    <div class="voice-ring ring-1"></div>
+                    <div class="voice-ring ring-2"></div>
+                    <div class="voice-ring ring-3"></div>
+                    <div class="voice-core">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                            <line x1="12" y1="19" x2="12" y2="23"></line>
+                            <line x1="8" y1="23" x2="16" y2="23"></line>
+                        </svg>
+                    </div>
+                </div>
+                <div class="voice-status-text" id="voiceStatusText">Tap Start to Speak</div>
+            </div>
+
+            <div class="voice-transcript-card glass-panel">
+                <div class="transcript-label">Live Conversation:</div>
+                <div class="transcript-content" id="voiceTranscriptContent">
+                    Speak naturally. Groq AI listens and talks back automatically.
+                </div>
+            </div>
+
+            <div class="voice-controls">
+                <button class="btn btn-voice-action" id="voiceToggleListenBtn">
+                    <span id="voiceToggleListenText">Start Listening</span>
+                </button>
+                <button class="btn btn-voice-secondary" id="voiceInterruptBtn">
+                    <span>Stop Speaking</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= Settings & Profile Modal ================= -->
+    <div class="modal" id="settingsModal" style="display: none;">
+        <div class="modal-backdrop" id="settingsBackdrop"></div>
+        <div class="modal-dialog glass-panel">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                    <span>Settings & Preferences</span>
+                </div>
+                <button class="icon-btn modal-close-btn" id="closeSettingsBtn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Modal Nav Tabs -->
+            <div class="modal-tabs">
+                <button class="modal-tab-btn active" data-tab="tabPersonalization">Personalization</button>
+                <button class="modal-tab-btn" data-tab="tabProfile">Account Profile</button>
+                <button class="modal-tab-btn" data-tab="tabApi">API & System</button>
+            </div>
+
+            <div class="modal-body">
+                <!-- Tab 1: Personalization -->
+                <div class="tab-pane active" id="tabPersonalization">
+                    <div class="setting-item">
+                        <label>Appearance Theme</label>
+                        <div class="theme-options-grid">
+                            <label class="theme-radio-label">
+                                <input type="radio" name="settingTheme" value="dark" {% if settings.get('theme') != 'light' %}checked{% endif %}>
+                                <div class="theme-card-option dark-card">
+                                    <span>🌙 Dark Mode</span>
+                                </div>
+                            </label>
+                            <label class="theme-radio-label">
+                                <input type="radio" name="settingTheme" value="light" {% if settings.get('theme') == 'light' %}checked{% endif %}>
+                                <div class="theme-card-option light-card">
+                                    <span>☀️ Light Mode</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="setting-item">
+                        <label>Chatbot Background Theme</label>
+                        <div class="bg-options-grid">
+                            <label class="bg-radio-label">
+                                <input type="radio" name="settingBackground" value="dragon_throne" {% if settings.get('background') == 'dragon_throne' or not settings.get('background') %}checked{% endif %}>
+                                <div class="bg-card-option">
+                                    <div class="bg-card-thumb" style="background-image: url('{{ url_for('static', filename='images/dragon_throne_bg.jpg') }}');"></div>
+                                    <span>🐉 Dragon Throne</span>
+                                </div>
+                            </label>
+                            <label class="bg-radio-label">
+                                <input type="radio" name="settingBackground" value="dragon_sigil" {% if settings.get('background') == 'dragon_sigil' %}checked{% endif %}>
+                                <div class="bg-card-option">
+                                    <div class="bg-card-thumb" style="background-image: url('{{ url_for('static', filename='images/dragon_sigil_bg.png') }}');"></div>
+                                    <span>🔥 Fire Sigil</span>
+                                </div>
+                            </label>
+                            <label class="bg-radio-label">
+                                <input type="radio" name="settingBackground" value="none" {% if settings.get('background') == 'none' %}checked{% endif %}>
+                                <div class="bg-card-option">
+                                    <div class="bg-card-thumb" style="background: linear-gradient(135deg, #111726, #0b0f17);"></div>
+                                    <span>🌑 Classic Dark</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="setting-item">
+                        <label for="settingFontSize">Text Font Size</label>
+                        <select id="settingFontSize" class="form-control">
+                            <option value="small" {% if settings.get('font_size') == 'small' %}selected{% endif %}>Small (14px)</option>
+                            <option value="normal" {% if settings.get('font_size') == 'normal' or not settings.get('font_size') %}selected{% endif %}>Normal (16px - Default)</option>
+                            <option value="large" {% if settings.get('font_size') == 'large' %}selected{% endif %}>Large (18px)</option>
+                        </select>
+                    </div>
+
+                    <div class="setting-item">
+                        <label for="settingLanguage">AI Response Language</label>
+                        <select id="settingLanguage" class="form-control">
+                            <option value="en" {% if settings.get('language') == 'en' %}selected{% endif %}>English</option>
+                            <option value="es" {% if settings.get('language') == 'es' %}selected{% endif %}>Español (Spanish)</option>
+                            <option value="fr" {% if settings.get('language') == 'fr' %}selected{% endif %}>Français (French)</option>
+                            <option value="de" {% if settings.get('language') == 'de' %}selected{% endif %}>Deutsch (German)</option>
+                            <option value="it" {% if settings.get('language') == 'it' %}selected{% endif %}>Italiano (Italian)</option>
+                            <option value="pt" {% if settings.get('language') == 'pt' %}selected{% endif %}>Português (Portuguese)</option>
+                            <option value="ru" {% if settings.get('language') == 'ru' %}selected{% endif %}>Русский (Russian)</option>
+                            <option value="zh" {% if settings.get('language') == 'zh' %}selected{% endif %}>中文 (Chinese)</option>
+                            <option value="ja" {% if settings.get('language') == 'ja' %}selected{% endif %}>日本語 (Japanese)</option>
+                            <option value="ko" {% if settings.get('language') == 'ko' %}selected{% endif %}>한국어 (Korean)</option>
+                            <option value="ar" {% if settings.get('language') == 'ar' %}selected{% endif %}>العربية (Arabic)</option>
+                            <option value="hi" {% if settings.get('language') == 'hi' %}selected{% endif %}>हिन्दी (Hindi)</option>
+                            <option value="bn" {% if settings.get('language') == 'bn' %}selected{% endif %}>বাংলা (Bengali)</option>
+                            <option value="te" {% if settings.get('language') == 'te' %}selected{% endif %}>తెలుగు (Telugu)</option>
+                            <option value="ta" {% if settings.get('language') == 'ta' %}selected{% endif %}>தமிழ் (Tamil)</option>
+                        </select>
+                        <span class="setting-hint">The AI will proactively respond in the selected language.</span>
+                    </div>
+
+                    <div class="setting-item">
+                        <label for="settingPersonality">AI Personality Preset</label>
+                        <select id="settingPersonality" class="form-control">
+                            <option value="helpful" {% if settings.get('personality') == 'helpful' %}selected{% endif %}>Helpful & Friendly Assistant</option>
+                            <option value="coding" {% if settings.get('personality') == 'coding' %}selected{% endif %}>Senior Software Engineer & Architect</option>
+                            <option value="creative" {% if settings.get('personality') == 'creative' %}selected{% endif %}>Creative Storyteller & Writer</option>
+                            <option value="sarcastic" {% if settings.get('personality') == 'sarcastic' %}selected{% endif %}>Witty & Sarcastic Bot</option>
+                            <option value="academic" {% if settings.get('personality') == 'academic' %}selected{% endif %}>Academic Professor & Scholar</option>
+                            <option value="executive" {% if settings.get('personality') == 'executive' %}selected{% endif %}>Executive Advisor (Concise & Direct)</option>
+                            <option value="custom" {% if settings.get('personality') == 'custom' %}selected{% endif %}>Custom Persona (Custom Prompt below)</option>
+                        </select>
+                    </div>
+
+                    <div class="setting-item" id="customPromptContainer">
+                        <label for="settingCustomPrompt">Custom System Instructions</label>
+                        <textarea id="settingCustomPrompt" class="form-control" rows="3" placeholder="Define exact instructions, behavior, or role for your AI...">{{ settings.get('custom_system_prompt', '') }}</textarea>
+                    </div>
+
+                    <div class="setting-item checkbox-item">
+                        <label class="toggle-checkbox-label">
+                            <input type="checkbox" id="settingAutoSpeak" {% if settings.get('auto_speak') %}checked{% endif %}>
+                            <span class="toggle-checkbox-custom"></span>
+                            <span>Auto-Read Answers Aloud (Voice Output)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Tab 2: User Profile -->
+                <div class="tab-pane" id="tabProfile" style="display: none;">
+                    <div class="profile-summary-box">
+                        <div class="profile-avatar-large">
+                            <span>{{ user.username[0].upper() }}</span>
+                        </div>
+                        <div class="profile-details">
+                            <h3>{{ user.username }}</h3>
+                            <p>{{ user.email }}</p>
+                            <span class="member-since">Member since: {{ user.created_at[:10] }}</span>
+                        </div>
+                    </div>
+
+                    <div class="password-change-box">
+                        <h4>Change Password</h4>
+                        <div class="form-group">
+                            <label for="currentPasswordInput">Current Password</label>
+                            <input type="password" id="currentPasswordInput" class="form-control" placeholder="••••••••">
+                        </div>
+                        <div class="form-group">
+                            <label for="newPasswordInput">New Password</label>
+                            <input type="password" id="newPasswordInput" class="form-control" placeholder="At least 6 characters">
+                        </div>
+                        <button class="btn btn-secondary" id="updatePasswordBtn">Update Password</button>
+                    </div>
+                </div>
+
+                <!-- Tab 3: API & System -->
+                <div class="tab-pane" id="tabApi" style="display: none;">
+                    <div class="api-status-card {{ 'status-connected' if has_api_key else 'status-missing' }}">
+                        <div class="api-status-header">
+                            <span class="status-indicator"></span>
+                            <strong>Groq API Key Status: {{ 'Connected' if has_api_key else 'Not Found' }}</strong>
+                        </div>
+                        <p>
+                            API Key is loaded automatically from <code>.env</code> or <code>.even</code> file in your application directory.
+                        </p>
+                    </div>
+
+                    <div class="setting-item">
+                        <label for="settingApiKeyInput">Groq API Key</label>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <input type="password" id="settingApiKeyInput" class="form-control" placeholder="Paste your key here (gsk_...)">
+                            <button class="btn btn-primary" id="saveApiKeyBtn" style="white-space: nowrap;">Save Key</button>
+                        </div>
+                        <span class="setting-hint">Don't have a key? Get one free in 30 seconds at <a href="https://console.groq.com/keys" target="_blank" style="color: var(--groq-primary); text-decoration: underline;">console.groq.com/keys</a></span>
+                    </div>
+
+                    <div class="setting-item">
+                        <label for="settingPreferredModel">Default Groq Model</label>
+                        <select id="settingPreferredModel" class="form-control">
+                            {% for m in models %}
+                            <option value="{{ m.id }}" {% if m.id == settings.get('preferred_model', 'llama-3.3-70b-versatile') %}selected{% endif %}>
+                                {{ m.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelSettingsBtn">Cancel</button>
+                <button class="btn btn-primary" id="saveSettingsBtn">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= Rename Chat Modal ================= -->
+    <div class="modal" id="renameModal" style="display: none;">
+        <div class="modal-backdrop" id="renameBackdrop"></div>
+        <div class="modal-dialog mini-dialog glass-panel">
+            <div class="modal-header">
+                <div class="modal-title">Rename Conversation</div>
+                <button class="icon-btn modal-close-btn" id="closeRenameBtn">×</button>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="renameChatInput" class="form-control" placeholder="Enter new title..." maxlength="100">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelRenameBtn">Cancel</button>
+                <button class="btn btn-primary" id="confirmRenameBtn">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= Image Lightbox Modal ================= -->
+    <div class="image-lightbox" id="imageLightbox" style="display: none;">
+        <div class="lightbox-backdrop" id="lightboxBackdrop"></div>
+        <div class="lightbox-content">
+            <button class="icon-btn lightbox-close" id="lightboxCloseBtn" title="Close Image">×</button>
+            <img id="lightboxImg" src="" alt="Full view">
+            <div class="lightbox-actions">
+                <a id="lightboxDownloadBtn" href="" download="groq_ai_image.jpg" class="btn btn-primary">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    <span>Download Full Resolution</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Markdown & Syntax Highlighting Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.1/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.9/purify.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <!-- Main Application JavaScript -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
